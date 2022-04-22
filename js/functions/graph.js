@@ -5,59 +5,61 @@ export function setGraphs(data){
     setGraph(data, 'piscine-go', "go-graph")
     setGraph(data, 'div-01', "div-graph")
     setGraph(data, 'piscine-js', "js-graph")
-
-
-
-    document.getElementById('nav-piscine-go-stats-tab').onclick = function() {setTimeout(setGraph, 500, data, 'piscine-go', 'go-graph');}
-    document.getElementById('nav-div-stats-tab').onclick = function() {setTimeout(setGraph, 500, data, 'div-01', 'div-graph');}
-    document.getElementById('nav-piscine-js-stats-tab').onclick = function() {setTimeout(setGraph, 500, data, 'piscine-js', 'js-graph');}
 }
 
 export function setGraph(dataArray, graphType, where){
     let setData = []
+    let dates = []
+    let datesData = []
 
     if (!where || !dataArray || !graphType) return
     
     dataArray.forEach(data => {
         if (data.from == graphType){
-            setData.push({x: new Date(data.createdAt), y: data.totalXP})
+            setData.push({
+                date: data.createdAt,
+                amount: data.totalXP
+            })
         }
     });
 
-    var chart = new Chartist.Line("#"+where, {
-        series: [
-            {
-                name: where,
-                data: setData
-            },
-        ]
-        },{
-        axisX: {
-          type: Chartist.FixedScaleAxis,
-          divisor: 5,
-          labelInterpolationFnc: function(value) {
-            return getDateFormat(value);
-          }
+    setData.sort(function(a,b){
+        return new Date(a.date) - new Date(b.date);
+    });
+
+    setData.forEach(data => {
+        dates.push(( new Date(data.date)))
+        datesData.push(data.amount)
+    })
+
+
+    const ctx = document.getElementById(where).getContext('2d');
+    const myChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: dates,
+            datasets: [{
+                label: 'xp over time',
+                data: datesData,
+                backgroundColor: ['rgb(13 110 253)'],
+                borderColor: ['rgb(13 110 253)'],
+                borderWidth: 1
+            }]
         },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true
+                },
 
-        axisY: {
-            type: Chartist.FixedScaleAxis,
-            divisor: 5,
-            labelInterpolationFnc: function(value) {
-              return getXPFormatStr(value);
-            },
-            labelOffset: {
-                x: 9,
-                y: 0
-            },
-        },
-
-        height: '300px',
-
-        lineSmooth: Chartist.Interpolation.cardinal({
-            tension: 0.2
-        }),
-
+                x: {
+                    type: 'time',
+                    time: {
+                        unit: 'month'
+                    },
+                }
+            }
+        }
     });
 }
 

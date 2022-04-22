@@ -3,6 +3,7 @@ import { setGraphs } from "./functions/graph.js";
 import { fetchDataWithQuery } from "./functions/query.js";
 import { setAudit } from "./functions/set_audit.js";
 import { setProjects, tableSetLoading } from "./functions/set_projects.js";
+import { setSkills } from "./functions/set_skills.js";
 import { setXP } from "./functions/set_xp.js";
 import { createUserSearch } from "./functions/user_search.js";
 
@@ -27,9 +28,11 @@ document.onreadystatechange = function () {
 let handledData = []
 
 export async function loadProfile(id = 3886){
+    if (id == null || id == undefined) return
     setLoadingProfile();
 
     setAudit(id)
+    setSkills(id)
 
     addProfilePicFromID(id)
 
@@ -87,12 +90,18 @@ function setLoadingProfile(){
     let profilePic = document.getElementById('profile-pic')
     profilePic.src="https://www.kaindl.com/fileadmin/_processed_/d/8/csm_2162_PE_Dekorbild_0ec3e17e00.jpg"
 
+    let canvases = [
+        'audit-graph',
+        'go-graph',
+        'div-graph',
+        'js-graph',
+        'skills-graph'
+    ]
 
-    document.getElementById('go-graph').innerHTML = `<div id="go-graph" class="ms-3 me-3 overflow-visible"><label class="text-dark">Go Piscine, xp over time</label></div>`
-    document.getElementById('div-graph').innerHTML = `<div id="div-graph" class="ms-3 me-3 overflow-visible"><label class="text-dark">div 01, xp over time</label></div>`
-    document.getElementById('js-graph').innerHTML = `<div id="js-graph" class="ms-3 me-3 overflow-visible"><label class="text-dark">JS Piscine, xp over time</label></div>`
-    document.getElementById('audit-graph').innerHTML = `<div id="audit-graph" class="ms-3 me-3 overflow-visible"><label class="text-dark">Audit ratio over time</label></div>`
-
+    canvases.forEach(canvasName => {
+        const chart = Chart.getChart(canvasName);
+        if (chart) chart.destroy()
+    });
 
     let progressBars = [
         'audit-down-rate',

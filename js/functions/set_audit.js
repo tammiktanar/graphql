@@ -34,8 +34,6 @@ export async function setAudit(id){
     let downData = await getDataFromTransactions(id, 0, [], 'down')
 
     makeAuditGraph(upData, downData)
-
-    document.getElementById('nav-audit-ratio-tab').onclick = function() {setTimeout(makeAuditGraph, 500, upData, downData);}
 }
 
 function makeAuditGraph(upData, downData){
@@ -53,10 +51,6 @@ function setAuditProgressBar(upData, downData){
     let up = upData.reduce((acc, transaction) => acc + transaction["amount"], 0)
     let down = downData.reduce((acc, transaction) => acc + transaction["amount"], 0)
 
-
-
-
-
     let downBar = document.getElementById('audit-down-rate')
     downBar.style.width = ((down/up)*100).toFixed(2) + "%"
     downBar.innerText = getXPFormatStr(down)
@@ -70,7 +64,8 @@ function setAuditProgressBar(upData, downData){
 }
 
 function setAuditGraph(dataArray){
-    let setData = []
+    let dates = []
+    let datesData = []
 
     let up = 0
     let down = 0
@@ -85,51 +80,47 @@ function setAuditGraph(dataArray){
 
         if (tempNr < 0) tempNr = 0
 
-        setData.push({
-            x: new Date(data.createdAt),
-            y: tempNr
-        })
+        dates.push(( new Date(data.createdAt)))
+        datesData.push(tempNr)
     });
 
-    var chart = new Chartist.Line("#audit-graph", {
-        series: [
-            {
-                name: "Audit ratio graph",
-                data: setData
-            },
-        ]
-        },{
-        axisX: {
-          type: Chartist.FixedScaleAxis,
-          divisor: 5,
-          labelInterpolationFnc: function(value) {
-            return getDateFormat(value);
-          }
-        },
 
-        series: {
-            'Audit ratio graph': {
-              lineSmooth: Chartist.Interpolation.step()
+    const upCTX = (ctx, value) => ctx.p0.parsed.y < ctx.p1.parsed.y ? value : undefined
+    const downCTX = (ctx, value) => ctx.p0.parsed.y > ctx.p1.parsed.y ? value : undefined
+
+
+
+
+    const ctx = document.getElementById('audit-graph').getContext('2d');
+    const myChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: dates,
+            datasets: [{
+                label: 'Audit ratio over time',
+                data: datesData,
+                backgroundColor: ['rgb(13 110 253)'],
+                fill: false,
+                borderWidth: 3,
+                segment: {
+                    borderColor: ctx => upCTX(ctx, 'rgb(25 135 84)') || downCTX(ctx, 'rgb(220 53 69)'),
+                    backgroundColor: ctx => upCTX(ctx, 'rgb(25 135 84)') || downCTX(ctx, 'rgb(220 53 69)'),
+                }
+            }]
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true
+                },
+
+                x: {
+                    type: 'time',
+                    time: {
+                        unit: 'month'
+                    },
+                }
             }
-        },
-
-        axisY: {
-            type: Chartist.FixedScaleAxis,
-            divisor: 5,
-            labelInterpolationFnc: function(value) {
-              return (value);
-            },
-            labelOffset: {
-                x: 9,
-                y: 0
-            },
-        },
-
-        height: '300px',
-
-        lineSmooth: Chartist.Interpolation.cardinal({
-            tension: 0.2
-        }),
-
+        }
     });
 }
